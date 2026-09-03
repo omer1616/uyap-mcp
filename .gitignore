@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Kullanıcı oturumu ve dava verileri
+chrome-profile/
+indirilen/
+downloads/
+*.pdf
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+*.png
+*.udf
+
+# Yerel ayarlar
+.env
+.DS_Store

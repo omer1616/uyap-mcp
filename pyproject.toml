@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "uyap-mcp"
+version = "0.1.0"
+description = "UYAP Avukat Portalı için yerel ve açık kaynak MCP sunucusu"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "UYAP MCP contributors" }]
+keywords = ["uyap", "mcp", "claude", "codex", "gemini"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "mcp>=2.0,<3",
+  "playwright>=1.40,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+uyap-mcp = "uyap_mcp.server:main"
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uyap_mcp"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
