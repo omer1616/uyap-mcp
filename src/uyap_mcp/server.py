@@ -107,13 +107,13 @@ def _case_summary(item: dict) -> CaseSummary:
     )
 
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="UYAP Oturum Durumu", annotations=READ_ONLY)
 def uyap_session_status() -> SessionStatus:
     """CDP bağlantısını, portal sekmesini ve UYAP giriş durumunu kişisel veri döndürmeden kontrol eder."""
     return SessionStatus.model_validate(worker.call("status"))
 
 
-@mcp.tool(annotations=PREPARES_LOGIN)
+@mcp.tool(title="UYAP Girişini Hazırla", annotations=PREPARES_LOGIN)
 def uyap_prepare_login(wait_seconds: int = 0) -> SessionStatus:
     """UYAP giriş sayfasını yerel Chrome'da aç; PIN'i yalnızca kullanıcı işletim sistemi ekranına girer.
 
@@ -124,14 +124,14 @@ def uyap_prepare_login(wait_seconds: int = 0) -> SessionStatus:
     return SessionStatus.model_validate(worker.call("prepare_login", wait_seconds))
 
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Dosyaları Listele", annotations=READ_ONLY)
 def uyap_list_cases(status: Literal[0, 1] = 0) -> CasesResult:
     """Açık (0) veya kapalı (1) UYAP dosyalarını evrak indirmeden listeler."""
     cases = worker.call("list_cases", status)
     return CasesResult(cases=[_case_summary(item) for item in cases])
 
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Evrakları Listele", annotations=READ_ONLY)
 def uyap_list_documents(
     case_no: str,
     unit: str | None = None,
@@ -152,7 +152,7 @@ def uyap_list_documents(
         )
 
 
-@mcp.tool(annotations=DOWNLOADS_FILES)
+@mcp.tool(title="Dosya Evraklarını İndir", annotations=DOWNLOADS_FILES)
 def uyap_download_case(
     case_no: str,
     unit: str | None = None,

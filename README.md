@@ -19,13 +19,18 @@ Ayrıntılar için [SECURITY.md](SECURITY.md) ve [PRIVACY.md](PRIVACY.md) dosyal
 
 ## MCP araçları
 
-| Araç | İşlev |
-|---|---|
-| `uyap_session_status` | CDP, portal sekmesi ve giriş durumunu kontrol eder |
-| `uyap_prepare_login` | Chrome'u UYAP giriş sayfasıyla açar; PIN'i kullanıcı girer |
-| `uyap_list_cases` | Açık veya kapalı dosyaları evrak indirmeden listeler |
-| `uyap_list_documents` | Evrak türü, tarihi ve grubunu listeler; içerik döndürmez |
-| `uyap_download_case` | Açık kullanıcı isteğiyle evrakları sıralı olarak yerel diske indirir |
+| Araç | Görünen ad | İşlev |
+|---|---|---|
+| `uyap_session_status` | UYAP Oturum Durumu | CDP, portal sekmesi ve giriş durumunu kontrol eder |
+| `uyap_prepare_login` | UYAP Girişini Hazırla | Chrome'u UYAP giriş sayfasıyla açar; PIN'i kullanıcı girer |
+| `uyap_list_cases` | Dosyaları Listele | Açık veya kapalı dosyaları evrak indirmeden listeler |
+| `uyap_list_documents` | Evrakları Listele | Evrak türü, tarihi ve grubunu listeler; içerik döndürmez |
+| `uyap_download_case` | Dosya Evraklarını İndir | Açık kullanıcı isteğiyle evrakları sıralı olarak yerel diske indirir |
+
+`Araç` sütunu MCP protokolünün çağrı için kullandığı teknik kimliktir (İngilizce/snake_case
+kalması gerekir, değiştirilirse mevcut istemci bağlantıları kırılır). `Görünen ad` ise
+Claude Desktop gibi istemcilerin arayüzünde kullanıcıya gösterdiği Türkçe başlıktır
+(`title` alanı).
 
 ## Gereksinimler
 
