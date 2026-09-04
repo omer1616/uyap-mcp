@@ -1,7 +1,7 @@
 # UYAP MCP
 
-UYAP Avukat Portalı'nı Claude Code, Codex ve Gemini CLI gibi MCP uyumlu istemcilere
-**yerel araçlar** olarak açan bağımsız Python sunucusu.
+UYAP Avukat Portalı'nı Claude Code, Claude Desktop, Codex ve Gemini CLI gibi MCP uyumlu
+istemcilere **yerel araçlar** olarak açan bağımsız Python sunucusu.
 
 > Bu proje UYAP'ın, Adalet Bakanlığı'nın veya başka bir kamu kurumunun resmî ürünü değildir.
 > Kullanıcı yalnızca kendi hesabı, kendi yetkileri ve mevzuata uygun kullanımından sorumludur.
@@ -48,6 +48,41 @@ uv run uyap-mcp
 
 Son komut STDIO sunucusunu başlatır ve bir MCP istemcisinden istek bekler; terminale normal
 çıktı yazmaması beklenen davranıştır.
+
+## Claude Desktop'a ekleme
+
+Claude Desktop, sadece bulutta çalışan claude.ai web sürümünden farklı olarak yerel STDIO MCP
+sunucularını destekler. Uygulamanın yapılandırma dosyasını açın:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Dosya yoksa oluşturun; varsa `mcpServers` altına `uyap` girdisini ekleyin:
+
+```json
+{
+  "mcpServers": {
+    "uyap": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/uyap-mcp",
+        "uyap-mcp"
+      ]
+    }
+  }
+}
+```
+
+`command` ve `args` alanlarını `uv` ikilisinin tam yoluyla belirtmeniz gerekebilir (örn.
+`command: "/usr/local/bin/uv"`), çünkü Claude Desktop uygulamayı sizin kabuk (`shell`)
+profilinizi yüklemeden başlatır ve `uv` `PATH` üzerinde bulunamayabilir. Terminalde
+`which uv` ile tam yolu öğrenebilirsiniz.
+
+Dosyayı kaydettikten sonra Claude Desktop'ı tamamen kapatıp yeniden açın. Araçlar bağlı
+göründüğünde (⚙️/🔌 simgesinden veya sohbet giriş alanındaki araç listesinden kontrol
+edebilirsiniz) sunucu hazırdır.
 
 ## Claude Code'a ekleme
 

@@ -109,7 +109,7 @@ def _case_summary(item: dict) -> CaseSummary:
 
 @mcp.tool(annotations=READ_ONLY)
 def uyap_session_status() -> SessionStatus:
-    """Yerel Chrome CDP bağlantısını ve UYAP giriş durumunu kişisel veri döndürmeden kontrol et."""
+    """CDP bağlantısını, portal sekmesini ve UYAP giriş durumunu kişisel veri döndürmeden kontrol eder."""
     return SessionStatus.model_validate(worker.call("status"))
 
 
@@ -126,7 +126,7 @@ def uyap_prepare_login(wait_seconds: int = 0) -> SessionStatus:
 
 @mcp.tool(annotations=READ_ONLY)
 def uyap_list_cases(status: Literal[0, 1] = 0) -> CasesResult:
-    """Kullanıcının açık (0) veya kapalı (1) UYAP dosyalarını içerik indirmeden listele."""
+    """Açık (0) veya kapalı (1) UYAP dosyalarını evrak indirmeden listeler."""
     cases = worker.call("list_cases", status)
     return CasesResult(cases=[_case_summary(item) for item in cases])
 
