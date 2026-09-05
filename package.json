@@ -1,0 +1,36 @@
+{
+  "name": "uyap-mcp",
+  "version": "0.1.0",
+  "description": "UYAP Avukat Portalı için yerel ve açık kaynak MCP sunucusu",
+  "type": "module",
+  "license": "MIT",
+  "author": "UYAP MCP contributors",
+  "keywords": ["uyap", "mcp", "claude", "codex", "gemini"],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "uyap-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "tsx --test test/*.test.ts",
+    "pretest": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "playwright-core": "^1.48.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

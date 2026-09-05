@@ -1,0 +1,23 @@
+# Kaynak/derleme dosyaları — yalnızca dist/ çalışma zamanında gerekli
+src/
+test/
+tsconfig.json
+tsconfig.test.json
+package-lock.json
+
+# Geliştirici ortamı
+.idea/
+.git/
+.gitignore
+.mcpbignore
+.DS_Store
+
+# Yalnızca geliştirmede kullanılan devDependencies zaten node_modules'tan
+# `npm prune --omit=dev` ile çıkarılıyor; yine de burada belirtilmesi güvenlik ağı.
+node_modules/typescript/
+node_modules/tsx/
+node_modules/esbuild/
+node_modules/@esbuild/
+node_modules/@types/
+node_modules/.bin/
+node_modules/.package-lock.json

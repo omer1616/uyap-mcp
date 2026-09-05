@@ -1,11 +1,11 @@
-# Python
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.venv/
+# Node
+node_modules/
 dist/
-build/
-*.egg-info/
+*.tsbuildinfo
+npm-debug.log*
+
+# Claude Desktop Extension paketleri
+*.mcpb
 
 # Kullanıcı oturumu ve dava verileri
 chrome-profile/
@@ -22,3 +22,4 @@ downloads/
 # Yerel ayarlar
 .env
 .DS_Store
+.idea/
