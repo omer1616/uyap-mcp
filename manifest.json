@@ -1,0 +1,51 @@
+{
+  "manifest_version": "0.3",
+  "name": "uyap-mcp",
+  "display_name": "UYAP MCP",
+  "version": "0.1.0",
+  "description": "UYAP Avukat Portalı'nı Claude Desktop'a yerel araç olarak açar",
+  "long_description": "Kullanıcının kendi bilgisayarında, e-imzayla açtığı UYAP Avukat Portalı oturumuna yerel Chrome üzerinden bağlanır. Dosya ve evrak listeleme, evrak indirme araçları sağlar. Bu proje UYAP'ın, Adalet Bakanlığı'nın veya başka bir kamu kurumunun resmî ürünü değildir.",
+  "author": {
+    "name": "UYAP MCP contributors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omer1616/uyap-mcp"
+  },
+  "license": "MIT",
+  "keywords": ["uyap", "mcp", "hukuk", "avukat", "claude"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "UYAP_MCP_OUTPUT_DIR": "${user_config.output_dir}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "uyap_session_status", "description": "CDP bağlantısını, portal sekmesini ve UYAP giriş durumunu kontrol eder." },
+    { "name": "uyap_prepare_login", "description": "Chrome'u UYAP giriş sayfasıyla açar; PIN'i kullanıcı girer." },
+    { "name": "uyap_list_cases", "description": "Açık veya kapalı dosyaları evrak indirmeden listeler." },
+    { "name": "uyap_list_documents", "description": "Evrak türü, tarihi ve grubunu listeler; içerik döndürmez." },
+    { "name": "uyap_download_case", "description": "Açık kullanıcı isteğiyle evrakları sıralı olarak yerel diske indirir." }
+  ],
+  "user_config": {
+    "output_dir": {
+      "type": "directory",
+      "title": "Evrakların indirileceği klasör",
+      "description": "Boş bırakılırsa ~/Downloads/UYAP kullanılır.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "privacy_policies": ["PRIVACY.md"]
+}

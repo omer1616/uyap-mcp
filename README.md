@@ -1,7 +1,7 @@
 # UYAP MCP
 
-UYAP Avukat Portalı'nı Claude Code, Claude Desktop, Codex ve Gemini CLI gibi MCP uyumlu
-istemcilere **yerel araçlar** olarak açan bağımsız Python sunucusu.
+UYAP Avukat Portalı'nı Claude Desktop, Claude Code, Codex ve Gemini CLI gibi MCP uyumlu
+istemcilere **yerel araçlar** olarak açan bağımsız Node.js sunucusu.
 
 > Bu proje UYAP'ın, Adalet Bakanlığı'nın veya başka bir kamu kurumunun resmî ürünü değildir.
 > Kullanıcı yalnızca kendi hesabı, kendi yetkileri ve mevzuata uygun kullanımından sorumludur.
@@ -13,9 +13,43 @@ istemcilere **yerel araçlar** olarak açan bağımsız Python sunucusu.
 - E-imza PIN'ini istemez, almaz, saklamaz veya loglamaz. Girişi kullanıcı Chrome'da tamamlar.
 - Listeleme araçları evrak içeriğini modele göndermez.
 - İndirmeler yalnızca sabit yerel çıktı köküne yapılır; model çıktı yolu veremez.
-- Portal işlemleri tek Playwright iş parçacığında sıraya alınır. UYAP eş zamanlı sorguları reddeder.
+- Portal işlemleri tek sıralı kuyrukta çalışır. UYAP eş zamanlı sorguları reddeder.
 
-Ayrıntılar için [SECURITY.md](SECURITY.md) ve [PRIVACY.md](PRIVACY.md) dosyalarına bakın.
+Bu tasarım yüzünden sunucu bilinçli olarak **yereldir**: UYAP oturumunu veya e-imza akışını
+uzak/hosted bir sunucuya taşımak bu güvenlik modelini bozar (bkz. [SECURITY.md](SECURITY.md),
+[PRIVACY.md](PRIVACY.md)).
+
+## Kurulum: Claude Desktop (önerilen, avukat için)
+
+En kolay yol **Claude Desktop Extension** (`.mcpb`) paketidir — Node.js zaten Claude
+Desktop'ın içinde geldiği için kullanıcının ayrıca Node, Python veya `uv` kurmasına gerek
+yoktur; yalnızca Google Chrome (e-imza girişi için zaten şart) yeterlidir.
+
+1. Bu depoyu klonlayıp bağımlılıkları kurun ve derleyin:
+
+   ```bash
+   git clone <depo-adresi>
+   cd uyap-mcp
+   npm install
+   npm run build
+   ```
+
+2. `.mcpb` paketleme aracını kurup paketi üretin:
+
+   ```bash
+   npm install -g @anthropic-ai/mcpb
+   mcpb pack .
+   ```
+
+   Bu, dizine bir `uyap-mcp.mcpb` dosyası oluşturur.
+
+3. Oluşan `uyap-mcp.mcpb` dosyasını Claude Desktop'a **sürükleyip bırakın** (veya Claude
+   Desktop → Settings → Extensions → Install from file...). Kurulum ekranında "Evrakların
+   indirileceği klasör" alanı isteğe bağlı olarak görünür — boş bırakılırsa
+   `~/Downloads/UYAP` kullanılır. JSON dosyası düzenlemeye, terminale komut yazmaya gerek yok.
+
+4. Chrome'da e-Devlet ve e-imza ile UYAP Avukat Portalı'na giriş yapın, ardından Claude'a
+   "UYAP oturum durumunu kontrol et" deyin.
 
 ## MCP araçları
 
@@ -34,82 +68,41 @@ Claude Desktop gibi istemcilerin arayüzünde kullanıcıya gösterdiği Türkç
 
 ## Gereksinimler
 
-- Python 3.11 veya üzeri
-- `uv`
-- Google Chrome
-- UYAP Avukat Portalı hesabı, e-imza ve akıllı kart
+- **`.mcpb` ile kurulum yapan avukat için**: yalnızca Google Chrome + UYAP Avukat Portalı
+  hesabı, e-imza ve akıllı kart. Node.js kurmasına gerek yoktur (Claude Desktop'ın içinde
+  gelir).
+- **Geliştirme / paketleme için**: Node.js 18+, npm, ve `.mcpb` üretmek isteyen için
+  `@anthropic-ai/mcpb` (`npm install -g @anthropic-ai/mcpb`).
 
-Playwright kendi Chromium'unu indirmez; sistemdeki gerçek Chrome'a CDP üzerinden bağlanır.
+`playwright-core` kullanılır (tam `playwright` değil) — kendi Chromium'unu indirmez,
+sistemdeki gerçek Chrome'a yalnızca CDP üzerinden bağlanır.
 
 ## Yerel geliştirme
 
 ```bash
 git clone <depo-adresi>
 cd uyap-mcp
-uv sync --extra dev
-uv run pytest
-uv run uyap-mcp
+npm install
+npm test
+npm run build
+npm start
 ```
 
-Son komut STDIO sunucusunu başlatır ve bir MCP istemcisinden istek bekler; terminale normal
-çıktı yazmaması beklenen davranıştır.
-
-## Claude Desktop'a ekleme
-
-Claude Desktop, sadece bulutta çalışan claude.ai web sürümünden farklı olarak yerel STDIO MCP
-sunucularını destekler. Uygulamanın yapılandırma dosyasını açın:
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
-Dosya yoksa oluşturun; varsa `mcpServers` altına `uyap` girdisini ekleyin:
-
-```json
-{
-  "mcpServers": {
-    "uyap": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/absolute/path/to/uyap-mcp",
-        "uyap-mcp"
-      ]
-    }
-  }
-}
-```
-
-`command` ve `args` alanlarını `uv` ikilisinin tam yoluyla belirtmeniz gerekebilir (örn.
-`command: "/usr/local/bin/uv"`), çünkü Claude Desktop uygulamayı sizin kabuk (`shell`)
-profilinizi yüklemeden başlatır ve `uv` `PATH` üzerinde bulunamayabilir. Terminalde
-`which uv` ile tam yolu öğrenebilirsiniz.
-
-Dosyayı kaydettikten sonra Claude Desktop'ı tamamen kapatıp yeniden açın. Araçlar bağlı
-göründüğünde (⚙️/🔌 simgesinden veya sohbet giriş alanındaki araç listesinden kontrol
-edebilirsiniz) sunucu hazırdır.
+`npm start` STDIO sunucusunu başlatır ve bir MCP istemcisinden istek bekler; terminale
+normal çıktı yazmaması beklenen davranıştır. Geliştirme sırasında derlemeden çalıştırmak
+için `npm run dev` (tsx ile doğrudan TypeScript'ten çalışır).
 
 ## Claude Code'a ekleme
 
-Yerel geliştirme kopyasını doğrudan ekleyin:
-
 ```bash
-claude mcp add uyap -- uv run --directory /absolute/path/to/uyap-mcp uyap-mcp
-```
-
-Yayın adresi belirlendikten sonra kurulum gerektirmeyen Git sürümü şöyle olacaktır:
-
-```bash
-claude mcp add uyap -- uvx --from git+https://github.com/ORGANIZATION/uyap-mcp uyap-mcp
+claude mcp add uyap -- node /absolute/path/to/uyap-mcp/dist/index.js
 ```
 
 ## Codex'e ekleme
 
 ```bash
-codex mcp add uyap -- uv run --directory /absolute/path/to/uyap-mcp uyap-mcp
+codex mcp add uyap -- node /absolute/path/to/uyap-mcp/dist/index.js
 ```
-
-Yayın sonrasında aynı sunucu `uvx --from git+https://...` komutuyla doğrudan çalıştırılabilir.
 
 ## Gemini CLI'a ekleme
 
@@ -119,13 +112,8 @@ Gemini CLI `settings.json` dosyasındaki `mcpServers` bölümüne STDIO komutunu
 {
   "mcpServers": {
     "uyap": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/absolute/path/to/uyap-mcp",
-        "uyap-mcp"
-      ]
+      "command": "node",
+      "args": ["/absolute/path/to/uyap-mcp/dist/index.js"]
     }
   }
 }
@@ -134,7 +122,8 @@ Gemini CLI `settings.json` dosyasındaki `mcpServers` bölümüne STDIO komutunu
 ## Ayarlar
 
 MCP araçları profil veya çıktı yolu kabul etmez. Bunlar yalnızca sunucu başlatılırken ortam
-değişkenleriyle belirlenir:
+değişkenleriyle belirlenir (`.mcpb` kurulumunda `output_dir` alanı `UYAP_MCP_OUTPUT_DIR`'a
+otomatik eşlenir):
 
 | Değişken | Varsayılan |
 |---|---|
@@ -145,7 +134,7 @@ değişkenleriyle belirlenir:
 Örnek:
 
 ```bash
-UYAP_MCP_OUTPUT_DIR="$HOME/Documents/UYAP" uv run uyap-mcp
+UYAP_MCP_OUTPUT_DIR="$HOME/Documents/UYAP" npm start
 ```
 
 ## Kullanım örneği

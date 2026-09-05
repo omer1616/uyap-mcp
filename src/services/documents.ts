@@ -1,19 +1,20 @@
-"""Portal sözleşmeleri ve I/O içermeyen belge yardımcıları."""
+/** Portal sözleşmeleri ve I/O içermeyen belge yardımcıları. */
 
-from __future__ import annotations
+import { resolve, relative, isAbsolute, sep, dirname, basename } from "node:path";
+import { realpathSync } from "node:fs";
 
-import re
-from pathlib import Path
+const WINDOWS_RESERVED_NAMES = new Set([
+  "CON",
+  "PRN",
+  "AUX",
+  "NUL",
+  ...Array.from({ length: 9 }, (_, index) => `COM${index + 1}`),
+  ...Array.from({ length: 9 }, (_, index) => `LPT${index + 1}`),
+]);
 
-WINDOWS_RESERVED_NAMES = {
-    "CON", "PRN", "AUX", "NUL",
-    *(f"COM{index}" for index in range(1, 10)),
-    *(f"LPT{index}" for index in range(1, 10)),
-}
+export const COURT_TYPE_CODES = ["0901", "0902", "0904"];
 
-COURT_TYPE_CODES = ["0901", "0902", "0904"]
-
-SEARCH_JS = r"""
+export const SEARCH_JS = String.raw`
 async ([codes, status]) => {
   const H = {"Content-Type":"application/json;charset=UTF-8"};
   const postJson = async (body) => {
@@ -39,9 +40,9 @@ async ([codes, status]) => {
   }
   return cases;
 }
-"""
+`;
 
-OPEN_AND_LIST_JS = r"""
+export const OPEN_AND_LIST_JS = String.raw`
 async ([dosyaId]) => {
   const H = {"Content-Type":"application/json;charset=UTF-8"};
   const postText = async (path, body) => {
@@ -76,9 +77,9 @@ async ([dosyaId]) => {
   }
   return documents;
 }
-"""
+`;
 
-FETCH_ONE_JS = r"""
+export const FETCH_ONE_JS = String.raw`
 async ([dosyaId, evrakId]) => {
   const isDocument = (bytes) => {
     if (bytes.length < 4) return false;
@@ -121,49 +122,81 @@ async ([dosyaId, evrakId]) => {
   }
   return {error:error || snippet || "Geçersiz yanıt; oturum veya aktif oturum sınırı kontrol edilmeli."};
 }
-"""
+`;
 
+/** Portal metnini tek ve güvenli bir dosya yolu bileşenine dönüştürür. */
+export function sanitizeComponent(name: string | null | undefined): string {
+  let value = (name ?? "").replace(/\//g, ".").trim();
+  value = value.replace(/[<>:"\\|?*\x00-\x1f]/g, "_");
+  value = value.replace(/\s+/g, " ").replace(/[ .]+$/, "").slice(0, 120);
+  if (value === "" || value === "." || value === "..") {
+    return "x";
+  }
+  const stem = value.split(".", 1)[0].toUpperCase();
+  if (WINDOWS_RESERVED_NAMES.has(stem)) {
+    value = `_${value}`;
+  }
+  return value;
+}
 
-def sanitize_component(name: str | None) -> str:
-    """Portal metnini tek ve güvenli bir dosya yolu bileşenine dönüştürür."""
-    value = (name or "").replace("/", ".").strip()
-    value = re.sub(r'[<>:"\\|?*\x00-\x1f]', "_", value)
-    value = re.sub(r"\s+", " ", value).rstrip(" .")[:120]
-    if value in {"", ".", ".."}:
-        return "x"
-    if value.split(".", 1)[0].upper() in WINDOWS_RESERVED_NAMES:
-        value = f"_{value}"
-    return value
+/** Yalnızca desteklenen gerçek belge imzalarını kabul eder. */
+export function isRealDocument(data: Uint8Array): boolean {
+  return (
+    startsWith(data, [0x25, 0x50, 0x44, 0x46]) ||
+    startsWith(data, [0x49, 0x49, 0x2a, 0x00]) ||
+    startsWith(data, [0x4d, 0x4d, 0x00, 0x2a]) ||
+    (data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) ||
+    startsWith(data, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  );
+}
 
+/** Uzantıyı güvenilmeyen Content-Type yerine doğrulanmış imzadan üretir. */
+export function extensionFor(data: Uint8Array): string {
+  if (startsWith(data, [0x25, 0x50, 0x44, 0x46])) return ".pdf";
+  if (startsWith(data, [0x49, 0x49, 0x2a, 0x00]) || startsWith(data, [0x4d, 0x4d, 0x00, 0x2a])) return ".tif";
+  if (data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) return ".jpg";
+  if (startsWith(data, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return ".png";
+  throw new Error("Desteklenmeyen belge biçimi.");
+}
 
-def is_real_document(data: bytes) -> bool:
-    """Yalnızca desteklenen gerçek belge imzalarını kabul eder."""
-    return (
-        data[:4] == b"%PDF"
-        or data[:4] in (b"II*\x00", b"MM\x00*")
-        or data[:3] == b"\xff\xd8\xff"
-        or data[:8] == b"\x89PNG\r\n\x1a\n"
-    )
+function startsWith(data: Uint8Array, signature: number[]): boolean {
+  if (data.length < signature.length) return false;
+  return signature.every((byte, index) => data[index] === byte);
+}
 
+/**
+ * Python'daki `Path.resolve(strict=False)` karşılığı: var olan en uzun üst dizini
+ * symlink'ler dahil gerçek yoluna çözer, henüz var olmayan kalan bileşenleri
+ * olduğu gibi sonuna ekler.
+ */
+function resolveStrictFalse(input: string): string {
+  const target = resolve(input);
+  let ancestor = target;
+  const missingTail: string[] = [];
+  for (;;) {
+    try {
+      const real = realpathSync.native(ancestor);
+      return missingTail.length ? resolve(real, ...missingTail.reverse()) : real;
+    } catch {
+      const parent = dirname(ancestor);
+      if (parent === ancestor) {
+        return target;
+      }
+      missingTail.push(basename(ancestor));
+      ancestor = parent;
+    }
+  }
+}
 
-def extension_for(data: bytes) -> str:
-    """Uzantıyı güvenilmeyen Content-Type yerine doğrulanmış imzadan üretir."""
-    if data[:4] == b"%PDF":
-        return ".pdf"
-    if data[:4] in (b"II*\x00", b"MM\x00*"):
-        return ".tif"
-    if data[:3] == b"\xff\xd8\xff":
-        return ".jpg"
-    if data[:8] == b"\x89PNG\r\n\x1a\n":
-        return ".png"
-    raise ValueError("Desteklenmeyen belge biçimi.")
-
-
-def contained_path(root: Path, *components: str) -> Path:
-    """Hedefin sabit çıktı kökü dışına ve symlink üzerinden taşmasını engeller."""
-    resolved_root = root.expanduser().resolve()
-    candidate = resolved_root.joinpath(*(sanitize_component(part) for part in components))
-    resolved_candidate = candidate.resolve(strict=False)
-    if not resolved_candidate.is_relative_to(resolved_root):
-        raise ValueError("Güvensiz çıktı yolu reddedildi.")
-    return resolved_candidate
+/** Hedefin sabit çıktı kökü dışına ve symlink üzerinden taşmasını engeller. */
+export function containedPath(root: string, ...components: string[]): string {
+  const resolvedRoot = resolveStrictFalse(root);
+  const rawCandidate = resolve(resolvedRoot, ...components.map((part) => sanitizeComponent(part)));
+  const resolvedCandidate = resolveStrictFalse(rawCandidate);
+  const relativePath = relative(resolvedRoot, resolvedCandidate);
+  const isOutside = relativePath === ".." || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath);
+  if (isOutside) {
+    throw new Error("Güvensiz çıktı yolu reddedildi.");
+  }
+  return resolvedCandidate;
+}
